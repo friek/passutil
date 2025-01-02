@@ -24,7 +24,6 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: 1.83.0
-          target: ${{ matrix.os }}
 
       # Build the binary
       - name: Build for ${{ matrix.os }}
@@ -40,7 +39,7 @@ jobs:
           OS=$(uname -o | tr A-Z a-z)
           ARCH=$(uname -m)
           TARGET=$(printf "%s-%s" $OS %ARCH)
-          cp target/${{ matrix.target }}/release/passutil output/passutil-$TARGET
+          cp target/release/passutil output/passutil-$TARGET
 
       # Upload the binaries as an artifact
       - name: Upload binaries
