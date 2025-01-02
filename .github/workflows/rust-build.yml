@@ -36,7 +36,7 @@ jobs:
       - name: Rename binary
         run: |
           mkdir -p output
-          OS=$(uname -o | tr A-Z a-z)
+          OS=$(uname -s | tr A-Z a-z)
           ARCH=$(uname -m)
           TARGET=$(printf "%s-%s" $OS $ARCH)
           cp target/release/passutil output/passutil-$TARGET
