@@ -4,7 +4,9 @@ on:
   # Trigger the workflow on push and pull request events
   push:
     branches:
-      - main
+      - '**'
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -29,20 +31,24 @@ jobs:
       - name: Build for ${{ matrix.os }}
         run: cargo build --release
 
+      # Run tests
       - name: Run tests
         run: cargo test
 
       # Rename the binary to include the OS name and architecture
       - name: Rename binary
+        if: startsWith(github.ref_name, 'v')
         run: |
           mkdir -p output
           OS=$(uname -s | tr A-Z a-z)
           ARCH=$(uname -m)
           TARGET=$(printf "%s-%s" $OS $ARCH)
-          cp target/release/passutil output/passutil-$TARGET
+          VERSION=$(target/release/passutil -V)
+          cp target/release/passutil output/passutil-${VERSION}-${TARGET}
 
       # Upload the binaries as an artifact
       - name: Upload binaries
+        if: startsWith(github.ref_name, 'v')
         uses: actions/upload-artifact@v3
         with:
           name: binaries
