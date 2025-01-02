@@ -129,7 +129,7 @@ fn generate_words(lang: Option<Language>, num_words: usize, max_word_length: usi
     };
 
     let mut words = Vec::new();
-    for _ in 0..num_words + 1 {
+    for _ in 0..num_words {
         let mut generated;
         loop {
             generated = random_word::gen(l);
