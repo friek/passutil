@@ -20,11 +20,11 @@ enum Language {
     version = option_env!("CARGO_PKG_VERSION").unwrap_or("unknown"), long_about = None)]
 #[command(arg_required_else_help = true)]
 struct Args {
-    /// Encrypt this existing password
-    #[arg(short, long)]
+    /// Encrypt existing password
+    #[arg(short, long, default_value_t = false)]
     existing_password: bool,
 
-    /// Encrypt this existing password
+    /// Echo back the entered password
     #[arg(long, default_value_t = false)]
     echo: bool,
 
@@ -33,7 +33,7 @@ struct Args {
     length: u8,
 
     /// Use symbols in addition to letters and numbers
-    #[arg(short, long, default_value_t = true)]
+    #[arg(short, long, default_value_t = false)]
     use_symbols: bool,
 
     /// Language in case of generating passwords consisting of words
@@ -112,7 +112,7 @@ fn generate_random_string(length: u8, chars: Vec<char>) -> String {
             let idx = rng.gen_range(0..chars.len()); // Pick a random index
             chars[idx] // Get the character at the random index
         })
-        .collect() // Collect the characters into a st
+        .collect() // Collect the characters into a string
 }
 
 fn generate_words(lang: Option<Language>, num_words: usize, max_word_length: usize) -> String {

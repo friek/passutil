@@ -1,0 +1,36 @@
+name: Build the passutil binary
+
+on:
+  # Trigger the workflow on push and pull request events
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.83.0
+
+      - name: Build the project
+        run: cargo build --release
+
+#      - name: Run tests
+#        run: cargo test
+
+      # Upload the built binary as an artifact
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: passutil
+          path: target/release/passutil
