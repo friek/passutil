@@ -28,6 +28,10 @@ jobs:
           toolchain: 1.83.0
           target: ${{ matrix.target }}
 
+      # Add build targets
+      - name: Add rust build targets
+        run: rustup target add ${{ matrix.target }}
+
       - name: Build for ${{ matrix.target }}
         run: cargo build --release --target=${{ matrix.target }}
 
