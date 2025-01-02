@@ -43,7 +43,7 @@ jobs:
           OS=$(uname -s | tr A-Z a-z)
           ARCH=$(uname -m)
           TARGET=$(printf "%s-%s" $OS $ARCH)
-          VERSION=$(target/release/passutil -V)
+          VERSION=$(target/release/passutil -V | awk '{print $2}')
           cp target/release/passutil output/passutil-${VERSION}-${TARGET}
 
       # Upload the binaries as an artifact
