@@ -38,7 +38,7 @@ jobs:
           mkdir -p output
           OS=$(uname -o | tr A-Z a-z)
           ARCH=$(uname -m)
-          TARGET=$(printf "%s-%s" $OS %ARCH)
+          TARGET=$(printf "%s-%s" $OS $ARCH)
           cp target/release/passutil output/passutil-$TARGET
 
       # Upload the binaries as an artifact
