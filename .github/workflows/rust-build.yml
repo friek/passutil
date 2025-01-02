@@ -8,29 +8,42 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - aarch64-apple-darwin
+          - x86_64-apple-darwin
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Install Rust
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: 1.83.0
+          target: ${{ matrix.target }}
 
-      - name: Build the project
-        run: cargo build --release
+      - name: Build for ${{ matrix.target }}
+        run: cargo build --release --target=${{ matrix.target }}
 
-#      - name: Run tests
-#        run: cargo test
+      - name: Run tests
+        run: cargo test
 
-      # Upload the built binary as an artifact
-      - name: Upload binary
+      # Rename the binary to include the OS name
+      - name: Rename binary
+        run: |
+          mkdir -p output
+          ARCH=$(echo ${{ matrix.target }} | sed 's/-unknown//g')
+          cp target/${{ matrix.target }}/release/passutil output/passutil-$ARCH
+
+      # Upload the binaries as an artifact
+      - name: Upload binaries
         uses: actions/upload-artifact@v3
         with:
-          name: passutil
-          path: target/release/passutil
+          name: binaries
+          path: output/
