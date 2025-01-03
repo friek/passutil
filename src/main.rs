@@ -1,7 +1,7 @@
 use clap::Parser;
+use passwords::PasswordGenerator;
 use pwhash::bcrypt::{self};
 use pwhash::{md5_crypt, sha1_crypt, sha256_crypt, sha512_crypt, unix_crypt};
-use rand::Rng;
 use random_word::Lang;
 
 // Mapping enum representing random_word::Lang
@@ -20,9 +20,17 @@ enum Language {
     version = option_env!("CARGO_PKG_VERSION").unwrap_or("unknown"), long_about = None)]
 #[command(arg_required_else_help = true)]
 struct Args {
-    /// Encrypt existing password
-    #[arg(short, long, default_value_t = false)]
+    /// Encrypt existing password. Needs to be entered on prompt
+    #[arg(short, long, default_value_t = false, conflicts_with_all = &["random_password", "words"])]
     existing_password: bool,
+
+    /// Generate a random password
+    #[arg(short, long, default_value_t = false, conflicts_with_all = &["existing_password", "words"])]
+    random_password: bool,
+
+    /// Generate a password using words
+    #[arg(long, short, default_value_t = false, conflicts_with_all = &["existing_password", "random_password"])]
+    words: bool,
 
     /// Echo back the entered password
     #[arg(long, default_value_t = false)]
@@ -30,7 +38,7 @@ struct Args {
 
     /// Password length
     #[arg(short, long, default_value_t = 12)]
-    length: u8,
+    length: usize,
 
     /// Use symbols in addition to letters and numbers
     #[arg(short, long, default_value_t = false)]
@@ -44,10 +52,6 @@ struct Args {
     #[arg(long, short, default_value_t = 3)]
     num_words: usize,
 
-    /// Generate a password using words
-    #[arg(long, short, default_value_t = false)]
-    words: bool,
-
     /// Maximum length of a word
     #[arg(long, short, default_value_t = 6)]
     max_word_length: usize,
@@ -57,16 +61,17 @@ fn main() {
     // Use the existing password or generate a new one with the given length
     let password = if args.existing_password {
         rpassword::prompt_password("Enter password: ").unwrap()
+    } else if args.words {
+        generate_words(&args)
+    } else if args.random_password {
+        generate_random_password(args.length, args.use_symbols)
     } else {
-        if args.words {
-            generate_words(args.language, args.num_words, args.max_word_length)
-        } else {
-            generate_random_password(args.length, args.use_symbols)
-        }
+        println!("Don't know what to do. Use --help for more info");
+        return;
     };
 
     println!();
-    if (args.existing_password && args.echo) || !args.existing_password {
+    if !args.existing_password || args.echo {
         println!("Password\t: {}", password);
     }
 
@@ -75,48 +80,33 @@ fn main() {
 
 #[allow(deprecated)]
 fn print_encrypted_password(password: &str) {
-    println!("MD5\t\t: {}", md5_crypt::hash(&password).unwrap());
-    println!("DES\t\t: {}", unix_crypt::hash(&password).unwrap());
-    println!("SHA1\t\t: {}", sha1_crypt::hash(&password).unwrap());
-    println!("SHA256\t\t: {}", sha256_crypt::hash(&password).unwrap());
-    println!("SHA512\t\t: {}", sha512_crypt::hash(&password).unwrap());
-    println!("bcrypt\t\t: {}", bcrypt::hash(&password).unwrap());
+    println!("MD5\t\t: {}", md5_crypt::hash(password).unwrap());
+    println!("DES\t\t: {}", unix_crypt::hash(password).unwrap());
+    println!("SHA1\t\t: {}", sha1_crypt::hash(password).unwrap());
+    println!("SHA256\t\t: {}", sha256_crypt::hash(password).unwrap());
+    println!("SHA512\t\t: {}", sha512_crypt::hash(password).unwrap());
+    println!("bcrypt\t\t: {}", bcrypt::hash(password).unwrap());
     println!();
 }
 
-fn generate_random_password(pw_length: u8, use_symbols: bool) -> String {
-    let letters = vec![
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
-        's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    ];
-    let numbers = vec!['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    let symbols = [
-        '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '+', '=', '{', '}', '[', ']',
-        '|', '\\', ':', ';', '<', '>', ',', '.', '?', '/', '`',
-    ];
+fn generate_random_password(pw_length: usize, use_symbols: bool) -> String {
+    let pg = PasswordGenerator {
+        length: pw_length,
+        numbers: true,
+        lowercase_letters: true,
+        uppercase_letters: true,
+        symbols: use_symbols,
+        spaces: false,
+        exclude_similar_characters: false,
+        strict: true,
+    };
 
-    let mut char_set = Vec::new();
-    char_set.extend(letters.to_vec());
-    char_set.extend(numbers.to_vec());
-    if use_symbols {
-        char_set.extend(symbols.to_vec());
-    }
-
-    generate_random_string(pw_length, char_set)
+    pg.generate_one().unwrap()
 }
 
-fn generate_random_string(length: u8, chars: Vec<char>) -> String {
-    let mut rng = rand::thread_rng(); // Thread-local random number generator
-    (0..length)
-        .map(|_| {
-            let idx = rng.gen_range(0..chars.len()); // Pick a random index
-            chars[idx] // Get the character at the random index
-        })
-        .collect() // Collect the characters into a string
-}
-
-fn generate_words(lang: Option<Language>, num_words: usize, max_word_length: usize) -> String {
-    let l = match lang {
+// fn generate_words(lang: Option<Language>, num_words: usize, max_word_length: usize) -> String {
+fn generate_words(args: &Args) -> String {
+    let l = match &args.language {
         Some(l) => match l {
             Language::De => Lang::De,
             Language::En => Lang::En,
@@ -129,11 +119,11 @@ fn generate_words(lang: Option<Language>, num_words: usize, max_word_length: usi
     };
 
     let mut words = Vec::new();
-    for _ in 0..num_words {
+    for _ in 0..args.num_words {
         let mut generated;
         loop {
             generated = random_word::gen(l);
-            if generated.len() <= max_word_length {
+            if generated.len() <= args.max_word_length {
                 break;
             }
         }
