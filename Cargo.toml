@@ -4,7 +4,7 @@ version = "0.1.2"
 edition = "2021"
 
 [dependencies]
-clap = { version = "4.5.23", features = ["derive"] }
+clap = { version = "4.5.27", features = ["derive"] }
 pwhash = "1.0.0"
 random_word = { version = "0.4.3", features = ["en", "es", "fr", "ja", "zh", "de"] }
 rpassword = "7.3.1"
