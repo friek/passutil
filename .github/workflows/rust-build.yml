@@ -49,7 +49,7 @@ jobs:
       # Upload the binaries as an artifact
       - name: Upload binaries
         if: startsWith(github.ref_name, 'v')
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: binaries
           path: output/
