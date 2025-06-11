@@ -122,7 +122,7 @@ fn generate_words(args: &Args) -> String {
     for _ in 0..args.num_words {
         let mut generated;
         loop {
-            generated = random_word::gen(l);
+            generated = random_word::get(l);
             if generated.len() <= args.max_word_length {
                 break;
             }
